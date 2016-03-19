@@ -3,8 +3,7 @@ package se.github.jaxrs.service;
 import static se.github.jaxrs.loader.ContextLoader.getBean;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -23,7 +22,6 @@ import se.github.springlab.repository.TeamRepository;
 public class TeamService extends AbstractService
 {
 	private static TeamRepository teamRepo = getBean(TeamRepository.class);
-	private static Map<Long, Team> teams = new HashMap<>();
 
 	static
 	{
@@ -33,11 +31,8 @@ public class TeamService extends AbstractService
 	@GET
 	public Response getAll()
 	{
-		for (Team team : teamRepo.findAll())
-		{
-			teams.put(team.getId(), team);
-		}
-		Collection<Team> result = teams.values();
+		Collection<Team> result = new HashSet<>();
+		teamRepo.findAll().forEach(e -> result.add(e));
 		GenericEntity<Collection<Team>> entity = new GenericEntity<Collection<Team>>(result)
 		{
 		};
