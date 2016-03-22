@@ -15,7 +15,7 @@ import com.google.gson.JsonObject;
  */
 public class JsonFieldUpdater
 {
-	private static HashMap<Class<?>, HashMap<String, Field>> fields = new HashMap<>();
+	private static HashMap<Class<?>, HashMap<String, UpdateableField>> fields = new HashMap<>();
 	private static HashMap<Class<?>, JsonConverter> converters = new HashMap<>();
 
 	private JsonFieldUpdater()
@@ -65,27 +65,27 @@ public class JsonFieldUpdater
 	 */
 	public static void modifyWithJson(Object object, JsonObject json) throws UnsupportedDataTypeException, IllegalArgumentException, IllegalAccessException
 	{
-		scanClass(object.getClass());
+		Class<?> objectClass = object.getClass();
 
-		Class<?> clazz = object.getClass();
-		HashMap<String, Field> classFields = fields.get(clazz);
+		scanClass(objectClass);
 
+		HashMap<String, UpdateableField> classFields = fields.get(objectClass);
 		for (Entry<String, JsonElement> entry : json.entrySet())
 		{
-			JsonElement element = entry.getValue();
-			String name = entry.getKey();
-			Field field = classFields.get(name);
-			if (field != null)
+			JsonElement jsonEntryValue = entry.getValue();
+			String jsonEntryName = entry.getKey();
+			UpdateableField objectField = classFields.get(jsonEntryName);
+			if (objectField != null) // check if the field found in json exists in this java object
 			{
-				Class<?> fieldType = field.getType();
-				JsonConverter jsonConverter = converters.get(fieldType);
-				if (jsonConverter == null)
+				Class<?> objectFieldType = objectField.getFieldType();
+				JsonConverter jsonConverter = converters.get(objectFieldType);
+				if (jsonConverter == null) // check if the field is of the same type as in json
 				{
-					throw new UnsupportedDataTypeException("the field type " + fieldType.getName() + " is not supported");
+					throw new UnsupportedDataTypeException("the field type " + objectFieldType.getName() + " is not supported");
 				}
 				else
 				{
-					field.set(object, jsonConverter.call(element));
+					objectField.update(object, jsonConverter.call(jsonEntryValue));
 				}
 			}
 		}
@@ -97,15 +97,15 @@ public class JsonFieldUpdater
 	 * {@link modifyWithJson(Object object, JsonObject json)} so dont call this
 	 * unless you wanna pre-load a huge quantity of class
 	 * 
-	 * @param clazz
+	 * @param objectClass
 	 *            class to scan through for annotations
 	 */
-	public static void scanClass(Class<?> clazz)
+	public static void scanClass(Class<?> objectClass)
 	{
-		if (fields.containsKey(clazz) == false)
+		if (fields.containsKey(objectClass) == false)
 		{
-			HashMap<String, Field> classFields = new HashMap<>();
-			for (Field field : clazz.getDeclaredFields())
+			HashMap<String, UpdateableField> classFields = new HashMap<>();
+			for (Field field : objectClass.getDeclaredFields())
 			{
 				JsonUpdatable annotation = field.getDeclaredAnnotation(JsonUpdatable.class);
 				if (annotation != null)
@@ -116,10 +116,10 @@ public class JsonFieldUpdater
 					{
 						name = field.getName();
 					}
-					classFields.put(name, field);
+					classFields.put(name, new UpdateableField(field));
 				}
 			}
-			fields.put(clazz, classFields);
+			fields.put(objectClass, classFields);
 		}
 	}
 }

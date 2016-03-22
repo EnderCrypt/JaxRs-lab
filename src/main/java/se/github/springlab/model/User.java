@@ -7,24 +7,32 @@ import javax.persistence.ManyToOne;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import se.github.jaxrs.jsonupdater.JsonUpdatable;
+
 @Entity
 public class User extends Id
 {
+	@JsonUpdatable
 	@Column(nullable = false)
 	private String firstName;
 
+	@JsonUpdatable
 	@Column(nullable = false)
 	private String lastName;
 
+	@JsonUpdatable
 	@Column(nullable = false)
 	private String username;
 
+	@JsonUpdatable
 	@Column(nullable = false)
 	private String password;
 
+	@JsonUpdatable
 	@Column(name = "user_nbr", unique = true, nullable = false)
 	private String userNumber;
 
+	@JsonUpdatable
 	@Column(nullable = false)
 	private boolean isActive = true;
 

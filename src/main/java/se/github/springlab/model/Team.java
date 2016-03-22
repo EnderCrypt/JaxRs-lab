@@ -6,15 +6,19 @@ import javax.persistence.Entity;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import se.github.jaxrs.jsonupdater.JsonUpdatable;
+
 @Entity
 public class Team extends Id
 {
+	@JsonUpdatable
 	@Column(nullable = false)
 	private String name;
 
 	//@Column(name = "status", nullable = false)
 	//private int teamStatus;
 
+	@JsonUpdatable
 	@Column(name = "is_active", nullable = false)
 	private boolean isActive = true;
 

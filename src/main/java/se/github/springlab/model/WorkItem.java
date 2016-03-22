@@ -7,20 +7,24 @@ import javax.persistence.ManyToOne;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import se.github.jaxrs.jsonupdater.JsonUpdatable;
 import se.github.springlab.status.ItemStatus;
 
 @Entity
 public class WorkItem extends Id
 {
+	@JsonUpdatable
 	@Column(nullable = false)
 	private String topic;
 
+	@JsonUpdatable
 	@Column(nullable = false)
 	private String description;
 
 	@ManyToOne
 	private User assignedUser;
 
+	@JsonUpdatable
 	@Column(name = "status", nullable = false)
 	private int itemStatus;
 
