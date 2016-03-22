@@ -34,7 +34,7 @@ public class SingleLogger
 		//file handler
 		try
 		{
-			File logFolder = new File("Logs/" + name + "/");
+			File logFolder = new File("/Users/MelEnt/Desktop/" + name);
 			logFolder.mkdirs();
 			logfile = new File(logFolder + "/" + generateFilename() + ".log");
 			fileHandler = new FileHandler(logfile.toString());

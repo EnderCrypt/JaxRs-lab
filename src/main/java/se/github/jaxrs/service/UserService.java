@@ -17,6 +17,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import se.github.springlab.model.Team;
 import se.github.springlab.model.User;
 import se.github.springlab.repository.UserRepository;
 
@@ -29,11 +30,13 @@ public class UserService
 
 	static
 	{
-		userRepo.save(new User("Olle", "Ollesson", "olle37", "qwerty1234", "1002"));
+		User user = new User("Olle", "Ollesson", "olle37", "qwerty1234", "1002");
+		user.assignTeam(new Team("yhc3l"));
+		userRepo.save(user);
 	}
 
 	@GET
-	Response getAll()
+	public Response getAll()
 	{
 		Collection<User> result = new HashSet<>();
 		userRepo.findAll().forEach(e -> result.add(e));
