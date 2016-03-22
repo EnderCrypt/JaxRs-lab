@@ -34,7 +34,7 @@ public class IssueService
 	}
 
 	@GET
-	public Response getOne()
+	public Response getAll()
 	{
 		Collection<Issue> result = new HashSet<>();
 		issueRepo.findAll().forEach(e -> result.add(e));
