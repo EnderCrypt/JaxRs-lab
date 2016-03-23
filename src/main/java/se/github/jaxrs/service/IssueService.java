@@ -11,6 +11,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
@@ -20,6 +21,7 @@ import javax.ws.rs.core.Response.Status;
 import se.github.springlab.model.Issue;
 import se.github.springlab.model.WorkItem;
 import se.github.springlab.repository.IssueRepository;
+import se.github.springlab.repository.WorkItemRepository;
 
 @Path("/issues")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -27,10 +29,19 @@ import se.github.springlab.repository.IssueRepository;
 public class IssueService
 {
 	private static IssueRepository issueRepo = getBean(IssueRepository.class);
+	private static WorkItemRepository workRepo = getBean(WorkItemRepository.class);
 
 	static
 	{
+		workRepo.save(new WorkItem("hej", "fis"));
 		issueRepo.save(new Issue(new WorkItem("topic", "desc"), "ETEASTEST"));
+	}
+
+	@POST
+	public Issue create(Issue issue)
+	{
+		return issueRepo.save(issue);
+
 	}
 
 	@GET
@@ -45,15 +56,9 @@ public class IssueService
 		return Response.ok(entity).build();
 	}
 
-	@POST
-	public Issue create(Issue issue)
-	{
-		return issueRepo.save(issue);
-
-	}
-
 	@DELETE
-	public Response remove(Long id)
+	@Path("{id}")
+	public Response remove(@PathParam("id") Long id)
 	{
 		if (issueRepo.exists(id))
 		{

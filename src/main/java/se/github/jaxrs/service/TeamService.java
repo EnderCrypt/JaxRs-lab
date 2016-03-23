@@ -44,7 +44,8 @@ public class TeamService extends AbstractService
 	{
 		Team newTeam = teamRepo.save(team);
 		URI location = uriInfo.getAbsolutePathBuilder().path(getClass(), "getOne").build(team.getId());
-		//		MultiLogger.log("TeamServiceLog", Level.INFO, "Created team: " + team.toString());
+		// MultiLogger.log("TeamServiceLog", Level.INFO, "Created team: " +
+		// team.toString());
 
 		return Response.ok(newTeam).contentLocation(location).build();
 	}
