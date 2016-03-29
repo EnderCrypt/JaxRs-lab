@@ -5,11 +5,14 @@ import static se.github.jaxrs.loader.ContextLoader.getBean;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.logging.Level;
 
+import javax.activation.UnsupportedDataTypeException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -20,6 +23,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import se.github.jaxrs.jsonupdater.JsonFieldUpdater;
 import se.github.logger.MultiLogger;
 import se.github.springlab.model.Team;
 import se.github.springlab.repository.TeamRepository;
@@ -44,9 +51,20 @@ public class TeamService extends AbstractService
 	{
 		Team newTeam = teamRepo.save(team);
 		URI location = uriInfo.getAbsolutePathBuilder().path(getClass(), "getOne").build(team.getId());
-		//		MultiLogger.log("TeamServiceLog", Level.INFO, "Created team: " + team.toString());
+		MultiLogger.log("TeamServiceLog", Level.INFO, "Created team: " + team.toString());
 
 		return Response.ok(newTeam).contentLocation(location).build();
+	}
+
+	@PUT
+	@Path("{id}")
+	public Team update(@PathParam("id") Long id, String json) throws UnsupportedDataTypeException, IllegalArgumentException, IllegalAccessException
+	{
+		JsonObject jsonObject = (JsonObject) new JsonParser().parse(json);
+		Team team = teamRepo.findOne(id);
+		JsonFieldUpdater.modifyWithJson(team, jsonObject);
+
+		return teamRepo.save(team);
 	}
 
 	@GET
@@ -83,17 +101,6 @@ public class TeamService extends AbstractService
 		}
 		return Response.status(Status.NOT_FOUND).build();
 
-	}
-
-	@DELETE
-	public Response removeAll()
-	{
-		teamRepo.deleteAll();
-		if (teamRepo.count() == 0)
-		{
-			return Response.ok().build();
-		}
-		return Response.status(Status.NOT_FOUND).build();
 	}
 
 }

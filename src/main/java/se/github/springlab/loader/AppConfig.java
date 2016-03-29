@@ -29,8 +29,8 @@ public class AppConfig
 		HikariConfig config = new HikariConfig();
 		config.setDriverClassName("com.mysql.jdbc.Driver");
 		config.setJdbcUrl("jdbc:mysql://localhost/JaxRs-lab");
-		config.setUsername("root");
-		config.setPassword("root");
+		config.setUsername("melent");
+		config.setPassword("654321");
 
 		return new HikariDataSource(config);
 	}

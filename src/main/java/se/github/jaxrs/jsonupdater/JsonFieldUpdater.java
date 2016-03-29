@@ -26,7 +26,7 @@ public class JsonFieldUpdater
 	 * adds the most basic primitive converts to make it easy for you to conver
 	 * most json properties into many java types
 	 */
-	public static void init()
+	static
 	{
 		// @formatter:off
 		addTypeSupport(boolean.class, e -> e.getAsBoolean());

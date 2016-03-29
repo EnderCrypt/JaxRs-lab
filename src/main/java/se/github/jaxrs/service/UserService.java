@@ -11,28 +11,32 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
 
-import se.github.springlab.model.Team;
 import se.github.springlab.model.User;
 import se.github.springlab.repository.UserRepository;
 
 @Path("/users")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public class UserService
+public class UserService extends AbstractService
 {
 	private static UserRepository userRepo = getBean(UserRepository.class);
 
+	@Context
+	UriInfo uriInfo;
+
 	static
 	{
-		User user = new User("Olle", "Ollesson", "olle37", "qwerty1234", "1002");
-		user.assignTeam(new Team("yhc3l"));
-		userRepo.save(user);
+		//		User user = new User("Olle", "Ollesson", "olle37", "qwerty1234", "1002");
+		//		userRepo.save(user);
 	}
 
 	@GET
@@ -47,6 +51,13 @@ public class UserService
 		return Response.ok(entity).build();
 	}
 
+	//	@GET
+	//	public Response getBy()
+	//	{
+	//		//		uriInfo.getQueryParameters().getFirst(key)
+	//		return Response.ok(uriInfo.getQueryParameters().getFirst("tjo")).build();
+	//	}
+
 	@POST
 	public User create(User user)
 	{
@@ -54,7 +65,8 @@ public class UserService
 	}
 
 	@DELETE
-	public Response remove(Long id)
+	@Path("{id}")
+	public Response remove(@PathParam("id") Long id)
 	{
 		if (userRepo.exists(id))
 		{
@@ -67,8 +79,7 @@ public class UserService
 	@PUT
 	public User update(User user)
 	{
-		userRepo.save(user);
-		return user;
+		return userRepo.save(user);
 	}
 
 }

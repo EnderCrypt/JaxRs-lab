@@ -2,6 +2,8 @@ package se.github.springlab.model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -9,15 +11,14 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import se.github.jaxrs.jsonupdater.JsonUpdatable;
 
 @Entity
+@XmlRootElement
 public class Team extends Id
 {
 	@JsonUpdatable
 	@Column(nullable = false)
 	private String name;
 
-	//@Column(name = "status", nullable = false)
-	//private int teamStatus;
-
+	@XmlElement
 	@JsonUpdatable
 	@Column(name = "is_active", nullable = false)
 	private boolean isActive = true;

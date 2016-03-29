@@ -18,7 +18,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import se.github.springlab.model.Issue;
-import se.github.springlab.model.WorkItem;
 import se.github.springlab.repository.IssueRepository;
 
 @Path("/issues")
@@ -27,11 +26,6 @@ import se.github.springlab.repository.IssueRepository;
 public class IssueService
 {
 	private static IssueRepository issueRepo = getBean(IssueRepository.class);
-
-	static
-	{
-		issueRepo.save(new Issue(new WorkItem("topic", "desc"), "ETEASTEST"));
-	}
 
 	@GET
 	public Response getAll()
@@ -49,7 +43,6 @@ public class IssueService
 	public Issue create(Issue issue)
 	{
 		return issueRepo.save(issue);
-
 	}
 
 	@DELETE
@@ -66,7 +59,6 @@ public class IssueService
 	@PUT
 	public Issue update(Issue issue)
 	{
-		issueRepo.save(issue);
-		return issue;
+		return issueRepo.save(issue);
 	}
 }

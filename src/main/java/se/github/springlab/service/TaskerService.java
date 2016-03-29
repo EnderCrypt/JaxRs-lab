@@ -40,9 +40,8 @@ public class TaskerService
 
 	// ------------------TEAM------------------
 
-	public void update(Team team)
+	public Team update(Team team)
 	{
-		teamRepository.save(team);
 		if (team.isActive() == false)
 		{
 			for (User user : userRepository.findByTeam(team))
@@ -51,11 +50,12 @@ public class TaskerService
 				update(user);
 			}
 		}
+		return teamRepository.save(team);
 	}
 
 	// ------------------USER------------------
 
-	public void update(User user)
+	public User update(User user)
 	{
 		if (user.getUsername().length() > 10)
 		{
@@ -77,17 +77,12 @@ public class TaskerService
 				throw new InvalidTeamException("team does not allow more than 10 users at any time");
 			}
 		}
-		userRepository.save(user);
+		return userRepository.save(user);
 	}
-
-	//	public List<User> getAll()
-	//	{
-	//		return userRepository.findAll();
-	//	}
 
 	// -----------------WORKITEM-------------------
 
-	public void update(WorkItem workItem)
+	public WorkItem update(WorkItem workItem)
 	{
 		if (workItem.getAssignedUser() == null)
 		{
@@ -104,7 +99,7 @@ public class TaskerService
 				throw new InvalidUserException("cannot store more than 5 workitems at any time");
 			}
 		}
-		workItemRepository.save(workItem);
+		return workItemRepository.save(workItem);
 	}
 
 	public List<WorkItem> getByStatus(ItemStatus status)

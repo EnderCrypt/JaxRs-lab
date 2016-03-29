@@ -3,6 +3,8 @@ package se.github.springlab.model;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -10,32 +12,40 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import se.github.jaxrs.jsonupdater.JsonUpdatable;
 
 @Entity
+@XmlRootElement
 public class User extends Id
 {
+	@XmlElement
 	@JsonUpdatable
 	@Column(nullable = false)
 	private String firstName;
 
+	@XmlElement
 	@JsonUpdatable
 	@Column(nullable = false)
 	private String lastName;
 
+	@XmlElement
 	@JsonUpdatable
 	@Column(nullable = false)
 	private String username;
 
+	@XmlElement
 	@JsonUpdatable
 	@Column(nullable = false)
 	private String password;
 
+	@XmlElement
 	@JsonUpdatable
 	@Column(name = "user_nbr", unique = true, nullable = false)
 	private String userNumber;
 
+	@XmlElement
 	@JsonUpdatable
 	@Column(nullable = false)
 	private boolean isActive = true;
 
+	@XmlElement
 	@ManyToOne //(cascade = { CascadeType.PERSIST, CascadeType.REFRESH })
 	private Team team;
 
