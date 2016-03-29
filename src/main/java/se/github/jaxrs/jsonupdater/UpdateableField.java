@@ -19,6 +19,7 @@ public class UpdateableField
 
 	public void update(Object object, Object value) throws IllegalArgumentException, IllegalAccessException
 	{
+		System.out.println(value);
 		field.set(object, value);
 	}
 

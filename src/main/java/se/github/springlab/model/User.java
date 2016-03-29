@@ -46,6 +46,7 @@ public class User extends Id
 	private boolean isActive = true;
 
 	@XmlElement
+	@JsonUpdatable
 	@ManyToOne //(cascade = { CascadeType.PERSIST, CascadeType.REFRESH })
 	private Team team;
 

@@ -23,13 +23,21 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import se.github.jaxrs.jsonupdater.JsonConverter;
 import se.github.jaxrs.jsonupdater.JsonFieldUpdater;
 import se.github.logger.MultiLogger;
 import se.github.springlab.model.Team;
 import se.github.springlab.repository.TeamRepository;
+
+/**
+ * DONE: 29/03-2016 Note: - entity Team.class is annotated with @XMLRootElement
+ * - several TODOs for appealing purposes
+ *
+ */
 
 @Path("/teams")
 @Produces(MediaType.APPLICATION_JSON)
@@ -44,6 +52,15 @@ public class TeamService extends AbstractService
 	static
 	{
 		MultiLogger.createLogger("TeamServiceLog");
+		JsonFieldUpdater.addTypeSupport(Team.class, new JsonConverter()
+		{
+			@Override
+			public Object call(JsonElement element)
+			{
+				Long id = element.getAsLong();
+				return teamRepo.findOne(id);
+			}
+		});
 	}
 
 	@POST
@@ -87,7 +104,7 @@ public class TeamService extends AbstractService
 		{
 			return teamRepo.findOne(id);
 		}
-		return null;
+		return null; //TODO: throw proper exception (404 NOT FOUND)
 	}
 
 	@DELETE
@@ -99,7 +116,7 @@ public class TeamService extends AbstractService
 			teamRepo.delete(id);
 			return Response.noContent().build();
 		}
-		return Response.status(Status.NOT_FOUND).build();
+		return Response.status(Status.NOT_FOUND).build(); //TODO: throw proper exception (404 NOT FOUND)
 
 	}
 

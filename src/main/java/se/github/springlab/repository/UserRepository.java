@@ -1,5 +1,6 @@
 package se.github.springlab.repository;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.Query;
@@ -20,4 +21,8 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>
 	List<User> findByUserNumber(String userNumber);
 
 	List<User> findByTeam(Team team);
+
+	//	@Query("SELECT u FROM #{#entityName} u WHERE u.team = ?1")
+	//	Collection<User> findByTeamId(Long id);
+	Collection<User> findByTeam_Id(Long id);
 }

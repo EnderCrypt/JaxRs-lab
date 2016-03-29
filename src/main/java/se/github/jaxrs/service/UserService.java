@@ -6,6 +6,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
 
+import javax.activation.UnsupportedDataTypeException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -21,6 +22,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import se.github.jaxrs.jsonupdater.JsonFieldUpdater;
 import se.github.springlab.model.User;
 import se.github.springlab.repository.UserRepository;
 
@@ -33,12 +38,6 @@ public class UserService extends AbstractService
 
 	@Context
 	UriInfo uriInfo;
-
-	static
-	{
-		//		User user = new User("Olle", "Ollesson", "olle37", "qwerty1234", "1002");
-		//		userRepo.save(user);
-	}
 
 	@POST
 	public Response create(User user)
@@ -60,12 +59,27 @@ public class UserService extends AbstractService
 		return Response.ok(entity).build();
 	}
 
-	//	@GET
-	//	public Response getBy()
-	//	{
-	//		//		uriInfo.getQueryParameters().getFirst(key)
-	//		return Response.ok(uriInfo.getQueryParameters().getFirst("tjo")).build();
-	//	}
+	@GET
+	@Path("query")
+	public Response getBy()
+	{
+
+		if (uriInfo.getQueryParameters().getFirst("getBy").equals("team"))
+		{
+			Long id = Long.parseLong(uriInfo.getQueryParameters().getFirst("id"));
+			Collection<User> result = new HashSet<>();
+			userRepo.findByTeam_Id(id).forEach(e -> result.add(e));
+			GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
+			{
+			};
+
+			return Response.ok(entity).build();
+
+		}
+
+		return null;
+
+	}
 
 	@GET
 	@Path("{id}")
@@ -91,8 +105,13 @@ public class UserService extends AbstractService
 	}
 
 	@PUT
-	public User update(User user)
+	@Path("{id}")
+	public User update(@PathParam("id") Long id, String json) throws UnsupportedDataTypeException, IllegalArgumentException, IllegalAccessException
 	{
+		JsonObject jsonObject = (JsonObject) new JsonParser().parse(json);
+		User user = userRepo.findOne(id);
+		JsonFieldUpdater.modifyWithJson(user, jsonObject);
+
 		return userRepo.save(user);
 	}
 
