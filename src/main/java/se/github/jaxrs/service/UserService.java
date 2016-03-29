@@ -2,6 +2,7 @@ package se.github.jaxrs.service;
 
 import static se.github.jaxrs.loader.ContextLoader.getBean;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -39,6 +40,14 @@ public class UserService extends AbstractService
 		//		userRepo.save(user);
 	}
 
+	@POST
+	public Response create(User user)
+	{
+		User newUser = userRepo.save(user);
+		URI location = uriInfo.getAbsolutePathBuilder().path(getClass(), "getOne").build(user.getId());
+		return Response.ok(newUser).contentLocation(location).build();
+	}
+
 	@GET
 	public Response getAll()
 	{
@@ -58,10 +67,15 @@ public class UserService extends AbstractService
 	//		return Response.ok(uriInfo.getQueryParameters().getFirst("tjo")).build();
 	//	}
 
-	@POST
-	public User create(User user)
+	@GET
+	@Path("{id}")
+	public Response getOne(@PathParam("id") Long id)
 	{
-		return userRepo.save(user);
+		if (userRepo.exists(id))
+		{
+			return Response.ok().build();
+		}
+		return Response.status(Status.NOT_FOUND).build();
 	}
 
 	@DELETE
