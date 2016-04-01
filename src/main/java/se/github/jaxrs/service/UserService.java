@@ -5,6 +5,7 @@ import static se.github.jaxrs.loader.ContextLoader.getBean;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 import javax.activation.UnsupportedDataTypeException;
 import javax.ws.rs.Consumes;
@@ -15,6 +16,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
@@ -63,33 +65,85 @@ public class UserService extends AbstractService
 	@Path("query")
 	public Response getBy()
 	{
-
-		if (uriInfo.getQueryParameters().getFirst("getBy").equals("team"))
+		// GET BY
+		if (uriInfo.getQueryParameters().containsValue("getBy"))
 		{
-			Long id = Long.parseLong(uriInfo.getQueryParameters().getFirst("id"));
-			Collection<User> result = new HashSet<>();
-			userRepo.findByTeam_Id(id).forEach(e -> result.add(e));
-			GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
+			if (uriInfo.getQueryParameters().getFirst("getBy").equals("team"))
+			{
+				Long id = Long.parseLong(uriInfo.getQueryParameters().getFirst("id"));
+				Collection<User> result = userRepo.findByTeamId(id);
+				if (result.isEmpty())
+				{
+					throw new WebApplicationException(Status.NOT_FOUND);
+				}
+				GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
+				{
+				};
+
+				return Response.ok(entity).build();
+			}
+		}
+
+		//SEARCH BY
+		switch (uriInfo.getQueryParameters().getFirst("searchBy"))
+		{
+		case "firstName":
+		{
+			String firstName = uriInfo.getQueryParameters().getFirst("q");
+			List<User> firstNames = userRepo.findByFirstNameLike(firstName);
+			GenericEntity<List<User>> firstNamesEntity = new GenericEntity<List<User>>(firstNames)
 			{
 			};
 
-			return Response.ok(entity).build();
+			return Response.ok(firstNamesEntity).build();
+		}
+		case "lastName":
+		{
+			String lastName = uriInfo.getQueryParameters().getFirst("q");
+			List<User> lastNames = userRepo.findByLastNameLike(lastName);
+			GenericEntity<List<User>> lastNamesEntity = new GenericEntity<List<User>>(lastNames)
+			{
+			};
 
+			return Response.ok(lastNamesEntity).build();
+		}
+		case "username":
+		{
+			String username = uriInfo.getQueryParameters().getFirst("q");
+			List<User> usernames = userRepo.findByUsernameLike(username);
+			GenericEntity<List<User>> usernamesEntity = new GenericEntity<List<User>>(usernames)
+			{
+			};
+
+			return Response.ok(usernamesEntity).build();
 		}
 
-		return null;
+		case "userNumber":
+		{
+			String userNumber = uriInfo.getQueryParameters().getFirst("q");
+			List<User> userNumbers = userRepo.findByUserNumber(userNumber);
+			GenericEntity<List<User>> userNumbersEntity = new GenericEntity<List<User>>(userNumbers)
+			{
+			};
+
+			return Response.ok(userNumbersEntity).build();
+		}
+
+		default:
+			throw new WebApplicationException(Status.BAD_REQUEST);
+		}
 
 	}
 
 	@GET
 	@Path("{id}")
-	public Response getOne(@PathParam("id") Long id)
+	public User getOne(@PathParam("id") Long id)
 	{
 		if (userRepo.exists(id))
 		{
-			return Response.ok().build();
+			return userRepo.findOne(id);
 		}
-		return Response.status(Status.NOT_FOUND).build();
+		throw new WebApplicationException(Status.NOT_FOUND);
 	}
 
 	@DELETE
