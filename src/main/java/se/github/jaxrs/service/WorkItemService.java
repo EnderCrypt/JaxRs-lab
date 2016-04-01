@@ -6,6 +6,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
 
+import javax.activation.UnsupportedDataTypeException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -19,8 +20,16 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import javax.ws.rs.core.UriInfo;
 
+import se.github.jaxrs.jsonupdater.JsonConverter;
+import se.github.jaxrs.jsonupdater.JsonFieldUpdater;
+import se.github.logger.MultiLogger;
 import se.github.springlab.model.WorkItem;
 import se.github.springlab.repository.WorkItemRepository;
 
@@ -30,25 +39,50 @@ import se.github.springlab.repository.WorkItemRepository;
 
 public class WorkItemService
 {
-	private static WorkItemRepository itemRepo = getBean(WorkItemRepository.class);
-
 	@Context
 	UriInfo uriInfo;
+
+	private static WorkItemRepository workItemRepo = getBean(WorkItemRepository.class);
+
+	static
+	{
+		MultiLogger.createLogger("WorkitemServiceLog");
+		JsonFieldUpdater.addTypeSupport(WorkItem.class, new JsonConverter()
+		{
+			@Override
+			public Object call(JsonElement element)
+			{
+				Long id = element.getAsLong();
+				return workItemRepo.findOne(id);
+			}
+		});
+	}
 
 	@POST
 	public Response create(WorkItem item)
 	{
-		WorkItem newItem = itemRepo.save(item);
+		WorkItem newItem = workItemRepo.save(item);
 		URI location = uriInfo.getAbsolutePathBuilder().path(getClass(), "getOne").build(item.getId());
 
 		return Response.ok(newItem).contentLocation(location).build();
+	}
+
+	@PUT
+	@Path("{id}")
+	public WorkItem update(@PathParam("id") Long id, String json) throws UnsupportedDataTypeException, IllegalArgumentException, IllegalAccessException
+	{
+		JsonObject jsonObject = (JsonObject) new JsonParser().parse(json);
+		WorkItem workItem = workItemRepo.findOne(id);
+		JsonFieldUpdater.modifyWithJson(workItem, jsonObject);
+
+		return workItemRepo.save(workItem);
 	}
 
 	@GET
 	public Response getAll()
 	{
 		Collection<WorkItem> result = new HashSet<>();
-		itemRepo.findAll().forEach(e -> result.add(e));
+		workItemRepo.findAll().forEach(e -> result.add(e));
 		GenericEntity<Collection<WorkItem>> entity = new GenericEntity<Collection<WorkItem>>(result)
 		{
 		};
@@ -60,7 +94,7 @@ public class WorkItemService
 	@Path("{id}")
 	public Response getOne(@PathParam("id") Long id)
 	{
-		if (itemRepo.exists(id))
+		if (workItemRepo.exists(id))
 		{
 			return Response.ok().build();
 		}
@@ -71,18 +105,11 @@ public class WorkItemService
 	@Path("{id}")
 	public Response remove(@PathParam("id") Long id)
 	{
-		if (itemRepo.exists(id))
+		if (workItemRepo.exists(id))
 		{
-			itemRepo.delete(id);
+			workItemRepo.delete(id);
 			return Response.noContent().build();
 		}
 		return Response.status(Status.NOT_FOUND).build();
-	}
-
-	@PUT
-	public WorkItem update(WorkItem item)
-	{
-		itemRepo.save(item);
-		return item;
 	}
 }

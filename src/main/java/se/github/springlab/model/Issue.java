@@ -17,9 +17,11 @@ public class Issue extends Id
 	@Column(nullable = false)
 	private String description;
 
+	@JsonUpdatable
 	@Column(name = "status", nullable = false)
 	private int issueStatus;
 
+	@JsonUpdatable
 	@OneToOne //(cascade = { CascadeType.PERSIST, CascadeType.REFRESH })
 	private WorkItem workItem;
 
