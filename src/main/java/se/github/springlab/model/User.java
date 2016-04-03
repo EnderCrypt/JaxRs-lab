@@ -27,7 +27,7 @@ public class User extends Id
 
 	@XmlElement
 	@JsonUpdatable
-	@Column(nullable = false)
+	@Column(nullable = false, unique = true)
 	private String username;
 
 	@XmlElement

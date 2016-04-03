@@ -53,6 +53,16 @@ public class TaskerService
 		return teamRepository.save(team);
 	}
 
+	@Transactional
+	public void remove(Team team)
+	{
+		for (User user : userRepository.findByTeam(team))
+		{
+			user.assignTeam(null);
+		}
+		teamRepository.delete(team);
+	}
+
 	// ------------------USER------------------
 
 	public User update(User user)
@@ -119,12 +129,12 @@ public class TaskerService
 	}
 
 	// -------------------- ISSUE -------------------- //
-	public void update(Issue issue)
+	public Issue update(Issue issue)
 	{
 		if (issue.getWorkItem().getStatus() == ItemStatus.DONE)
 		{
 			issue.getWorkItem().setStatus(ItemStatus.UNSTARTED);
-			issueRepository.save(issue);
+			return issueRepository.save(issue);
 		}
 		else
 		{
@@ -140,6 +150,26 @@ public class TaskerService
 			wItems.add(issue.getWorkItem());
 		}
 		return wItems;
+	}
+
+	public TeamRepository getTeamRepository()
+	{
+		return teamRepository;
+	}
+
+	public UserRepository getUserRepository()
+	{
+		return userRepository;
+	}
+
+	public WorkItemRepository getWorkItemRepository()
+	{
+		return workItemRepository;
+	}
+
+	public IssueRepository getIssueRepository()
+	{
+		return issueRepository;
 	}
 
 }

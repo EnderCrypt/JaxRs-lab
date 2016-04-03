@@ -14,8 +14,9 @@ import se.github.jaxrs.jsonupdater.JsonUpdatable;
 @XmlRootElement
 public class Team extends Id
 {
+	@XmlElement
 	@JsonUpdatable
-	@Column(nullable = false)
+	@Column(nullable = false, unique = true)
 	private String name;
 
 	@XmlElement

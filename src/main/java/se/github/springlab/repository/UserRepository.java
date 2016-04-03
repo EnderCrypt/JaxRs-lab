@@ -18,7 +18,7 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>
 	List<User> findByLastNameLike(String lastName);
 
 	@Query("SELECT u FROM #{#entityName} u WHERE u.userNumber = ?1")
-	List<User> findByUserNumber(String userNumber);
+	User findByUserNumber(String userNumber);
 
 	List<User> findByTeam(Team team);
 

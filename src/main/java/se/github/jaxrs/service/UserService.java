@@ -30,13 +30,15 @@ import com.google.gson.JsonParser;
 import se.github.jaxrs.jsonupdater.JsonFieldUpdater;
 import se.github.springlab.model.User;
 import se.github.springlab.repository.UserRepository;
+import se.github.springlab.service.TaskerService;
 
 @Path("/users")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class UserService extends AbstractService
 {
-	private static UserRepository userRepo = getBean(UserRepository.class);
+	private static TaskerService service = getBean(TaskerService.class);
+	private static UserRepository userRepo = service.getUserRepository();
 
 	@Context
 	UriInfo uriInfo;
@@ -44,53 +46,69 @@ public class UserService extends AbstractService
 	@POST
 	public Response create(User user)
 	{
-		User newUser = userRepo.save(user);
+		User newUser = service.update(user);
 		URI location = uriInfo.getAbsolutePathBuilder().path(getClass(), "getOne").build(user.getId());
 		return Response.ok(newUser).contentLocation(location).build();
 	}
 
 	@GET
-	public Response getAll()
+	public Response get()
 	{
-		Collection<User> result = new HashSet<>();
-		userRepo.findAll().forEach(e -> result.add(e));
-		GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
+		if (uriInfo.getQueryParameters().isEmpty())
 		{
-		};
+			Collection<User> result = new HashSet<>();
+			userRepo.findAll().forEach(e -> result.add(e));
+			GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
+			{
+			};
 
-		return Response.ok(entity).build();
+			return Response.ok(entity).build();
+		}
+		if (uriInfo.getQueryParameters().containsKey("getBy"))
+		{
+			return getByQuery();
+		}
+		if (uriInfo.getQueryParameters().containsKey("searchBy"))
+		{
+			return searchByQuery();
+		}
+		throw new WebApplicationException(Status.BAD_REQUEST);
+
 	}
 
-	@GET
-	@Path("query")
-	public Response getBy()
+	//getBy
+	private Response getByQuery()
 	{
-		// GET BY
-		if (uriInfo.getQueryParameters().containsValue("getBy"))
+		if (uriInfo.getQueryParameters().getFirst("getBy").equals("team"))
 		{
-			if (uriInfo.getQueryParameters().getFirst("getBy").equals("team"))
+			Long id = Long.parseLong(uriInfo.getQueryParameters().getFirst("id"));
+			Collection<User> result = userRepo.findByTeamId(id);
+			if (result.isEmpty())
 			{
-				Long id = Long.parseLong(uriInfo.getQueryParameters().getFirst("id"));
-				Collection<User> result = userRepo.findByTeamId(id);
-				if (result.isEmpty())
-				{
-					throw new WebApplicationException(Status.NOT_FOUND);
-				}
-				GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
-				{
-				};
-
-				return Response.ok(entity).build();
+				throw new WebApplicationException(Status.NOT_FOUND);
 			}
-		}
+			GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
+			{
+			};
 
-		//SEARCH BY
+			return Response.ok(entity).build();
+		}
+		throw new WebApplicationException(Status.BAD_REQUEST);
+	}
+
+	//searchBy
+	private Response searchByQuery()
+	{
 		switch (uriInfo.getQueryParameters().getFirst("searchBy"))
 		{
 		case "firstName":
 		{
 			String firstName = uriInfo.getQueryParameters().getFirst("q");
 			List<User> firstNames = userRepo.findByFirstNameLike(firstName);
+			if (firstNames.isEmpty())
+			{
+				throw new WebApplicationException(Status.NOT_FOUND);
+			}
 			GenericEntity<List<User>> firstNamesEntity = new GenericEntity<List<User>>(firstNames)
 			{
 			};
@@ -101,6 +119,10 @@ public class UserService extends AbstractService
 		{
 			String lastName = uriInfo.getQueryParameters().getFirst("q");
 			List<User> lastNames = userRepo.findByLastNameLike(lastName);
+			if (lastNames.isEmpty())
+			{
+				throw new WebApplicationException(Status.NOT_FOUND);
+			}
 			GenericEntity<List<User>> lastNamesEntity = new GenericEntity<List<User>>(lastNames)
 			{
 			};
@@ -111,6 +133,10 @@ public class UserService extends AbstractService
 		{
 			String username = uriInfo.getQueryParameters().getFirst("q");
 			List<User> usernames = userRepo.findByUsernameLike(username);
+			if (usernames.isEmpty())
+			{
+				throw new WebApplicationException(Status.NOT_FOUND);
+			}
 			GenericEntity<List<User>> usernamesEntity = new GenericEntity<List<User>>(usernames)
 			{
 			};
@@ -121,18 +147,17 @@ public class UserService extends AbstractService
 		case "userNumber":
 		{
 			String userNumber = uriInfo.getQueryParameters().getFirst("q");
-			List<User> userNumbers = userRepo.findByUserNumber(userNumber);
-			GenericEntity<List<User>> userNumbersEntity = new GenericEntity<List<User>>(userNumbers)
+			User user = userRepo.findByUserNumber(userNumber);
+			if (user == null)
 			{
-			};
-
-			return Response.ok(userNumbersEntity).build();
+				throw new WebApplicationException(Status.NOT_FOUND);
+			}
+			return Response.ok(user).build();
 		}
 
 		default:
 			throw new WebApplicationException(Status.BAD_REQUEST);
-		}
-
+		}//switch
 	}
 
 	@GET
@@ -153,7 +178,7 @@ public class UserService extends AbstractService
 		if (userRepo.exists(id))
 		{
 			userRepo.delete(id);
-			return Response.noContent().build();
+			return Response.ok().build();
 		}
 		return Response.status(Status.NOT_FOUND).build();
 	}

@@ -29,16 +29,17 @@ import com.google.gson.stream.JsonWriter;
 
 import se.github.jaxrs.loader.ContextLoader;
 import se.github.springlab.model.User;
+import se.github.springlab.repository.TeamRepository;
 import se.github.springlab.repository.UserRepository;
 
-//@Provider
+//@Provider //uncomment to enable custom MBW/MBR for User.class
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public final class UserProvider implements MessageBodyWriter<User>, MessageBodyReader<User>
 {
-
 	private static final Gson gson = new GsonBuilder().registerTypeAdapter(User.class, new UserAdapter()).create();
 	private static UserRepository userRepo = ContextLoader.getBean(UserRepository.class);
+	private static TeamRepository teamRepo = ContextLoader.getBean(TeamRepository.class);
 
 	//  ============= MessageBodyWriter
 	@Override
@@ -96,15 +97,11 @@ public final class UserProvider implements MessageBodyWriter<User>, MessageBodyR
 			json.addProperty("userNumber", user.getUserNumber());
 			json.addProperty("password", user.getPassword());
 			json.addProperty("isActive", user.isActive());
+			if (user.getTeam() != null)
+			{
+				json.addProperty("team", user.getTeam().getId());
+			}
 
-			JsonObject team = new JsonObject();
-			team.addProperty("id", user.getTeam().getId());
-			team.addProperty("name", user.getTeam().getName());
-			team.addProperty("isActive", user.getTeam().isActive());
-
-			json.add("team", team);
-
-			System.out.println("done");
 			return json;
 		}
 
@@ -112,20 +109,24 @@ public final class UserProvider implements MessageBodyWriter<User>, MessageBodyR
 		public User deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException
 		{
 			JsonObject userJson = json.getAsJsonObject();
-			Long userId = userJson.get("id").getAsLong();
-			//			String firstName = userJson.get("firstName").getAsString();
-			//			String lastName = userJson.get("lastName").getAsString();
-			//			String username = userJson.get("username").getAsString();
-			//			String userNumber = userJson.get("userNumber").getAsString();
-			//			String password = userJson.get("password").getAsString();
-			//			boolean userIsActive = userJson.get("isActive").getAsBoolean();
-			//
-			//			JsonObject teamJson = userJson.getAsJsonObject("team");
-			//			Long teamId = teamJson.get("id").getAsLong();
-			//			String teamName = teamJson.get("name").getAsString();
-			//			boolean teamIsActive = teamJson.get("isActive").getAsBoolean();
+			String firstName = userJson.get("firstName").getAsString();
+			String lastName = userJson.get("lastName").getAsString();
+			String username = userJson.get("username").getAsString();
+			String userNumber = userJson.get("userNumber").getAsString();
+			String password = userJson.get("password").getAsString();
+			boolean userIsActive = userJson.get("isActive").getAsBoolean();
 
-			return userRepo.findOne(userId);
+			User user = new User(firstName, lastName, username, password, userNumber);
+			if (!userIsActive)
+			{
+				user.deactivate();
+			}
+			if (userJson.has("team"))
+			{
+				Long id = userJson.get("team").getAsLong();
+				user.assignTeam(teamRepo.findOne(id));
+			}
+			return userRepo.save(user);
 		}
 
 	}

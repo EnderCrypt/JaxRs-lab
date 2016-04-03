@@ -15,23 +15,22 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import javax.ws.rs.core.UriInfo;
-
-import se.github.jaxrs.jsonupdater.JsonConverter;
 import se.github.jaxrs.jsonupdater.JsonFieldUpdater;
 import se.github.logger.MultiLogger;
 import se.github.springlab.model.WorkItem;
 import se.github.springlab.repository.WorkItemRepository;
+import se.github.springlab.service.TaskerService;
 
 @Path("/items")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -42,26 +41,18 @@ public class WorkItemService
 	@Context
 	UriInfo uriInfo;
 
-	private static WorkItemRepository workItemRepo = getBean(WorkItemRepository.class);
+	private static TaskerService service = getBean(TaskerService.class);
+	private static WorkItemRepository workItemRepo = service.getWorkItemRepository();
 
 	static
 	{
-		MultiLogger.createLogger("WorkitemServiceLog");
-		JsonFieldUpdater.addTypeSupport(WorkItem.class, new JsonConverter()
-		{
-			@Override
-			public Object call(JsonElement element)
-			{
-				Long id = element.getAsLong();
-				return workItemRepo.findOne(id);
-			}
-		});
+		MultiLogger.createLogger("WorkItemServiceLog");
 	}
 
 	@POST
 	public Response create(WorkItem item)
 	{
-		WorkItem newItem = workItemRepo.save(item);
+		WorkItem newItem = service.update(item);
 		URI location = uriInfo.getAbsolutePathBuilder().path(getClass(), "getOne").build(item.getId());
 
 		return Response.ok(newItem).contentLocation(location).build();
@@ -75,7 +66,7 @@ public class WorkItemService
 		WorkItem workItem = workItemRepo.findOne(id);
 		JsonFieldUpdater.modifyWithJson(workItem, jsonObject);
 
-		return workItemRepo.save(workItem);
+		return service.update(workItem);
 	}
 
 	@GET
@@ -92,13 +83,13 @@ public class WorkItemService
 
 	@GET
 	@Path("{id}")
-	public Response getOne(@PathParam("id") Long id)
+	public WorkItem getOne(@PathParam("id") Long id)
 	{
 		if (workItemRepo.exists(id))
 		{
-			return Response.ok().build();
+			return workItemRepo.findOne(id);
 		}
-		return Response.status(Status.NOT_FOUND).build();
+		throw new WebApplicationException(Status.NOT_FOUND);
 	}
 
 	@DELETE
@@ -108,7 +99,7 @@ public class WorkItemService
 		if (workItemRepo.exists(id))
 		{
 			workItemRepo.delete(id);
-			return Response.noContent().build();
+			return Response.ok().build();
 		}
 		return Response.status(Status.NOT_FOUND).build();
 	}
