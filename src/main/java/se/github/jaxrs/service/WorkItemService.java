@@ -65,9 +65,9 @@ public class WorkItemService
 	{
 		if (uriInfo.getQueryParameters().isEmpty())
 		{
-			Collection<User> result = new HashSet<>();
-			userRepo.findAll().forEach(e -> result.add(e));
-			GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
+			Collection<WorkItem> result = new HashSet<>();
+			workItemRepo.findAll().forEach(e -> result.add(e));
+			GenericEntity<Collection<WorkItem>> entity = new GenericEntity<Collection<WorkItem>>(result)
 			{
 			};
 
@@ -131,68 +131,24 @@ public class WorkItemService
 		return Response.ok(entity).build();
 	}
 
-	//searchBy
+	// searchBy
 	private Response searchByQuery()
 	{
-		switch (uriInfo.getQueryParameters().getFirst("searchBy"))
+		if (uriInfo.getQueryParameters().getFirst("searchBy").equals("description"))
 		{
-		case "firstName":
-		{
-			String firstName = uriInfo.getQueryParameters().getFirst("q");
-			List<User> firstNames = userRepo.findByFirstNameLike(firstName);
-			if (firstNames.isEmpty())
+			String workItem = uriInfo.getQueryParameters().getFirst("q");
+			List<WorkItem> workItems = workItemRepo.findByDescriptionLike(workItem);
+			if (workItems.isEmpty())
 			{
 				throw new WebApplicationException(Status.NOT_FOUND);
 			}
-			GenericEntity<List<User>> firstNamesEntity = new GenericEntity<List<User>>(firstNames)
+			GenericEntity<List<WorkItem>> workItemEntity = new GenericEntity<List<WorkItem>>(workItems)
 			{
 			};
-
-			return Response.ok(firstNamesEntity).build();
+			return Response.ok(workItemEntity).build();
 		}
-		case "lastName":
-		{
-			String lastName = uriInfo.getQueryParameters().getFirst("q");
-			List<User> lastNames = userRepo.findByLastNameLike(lastName);
-			if (lastNames.isEmpty())
-			{
-				throw new WebApplicationException(Status.NOT_FOUND);
-			}
-			GenericEntity<List<User>> lastNamesEntity = new GenericEntity<List<User>>(lastNames)
-			{
-			};
+		throw new WebApplicationException(Status.NOT_FOUND);
 
-			return Response.ok(lastNamesEntity).build();
-		}
-		case "username":
-		{
-			String username = uriInfo.getQueryParameters().getFirst("q");
-			List<User> usernames = userRepo.findByUsernameLike(username);
-			if (usernames.isEmpty())
-			{
-				throw new WebApplicationException(Status.NOT_FOUND);
-			}
-			GenericEntity<List<User>> usernamesEntity = new GenericEntity<List<User>>(usernames)
-			{
-			};
-
-			return Response.ok(usernamesEntity).build();
-		}
-
-		case "userNumber":
-		{
-			String userNumber = uriInfo.getQueryParameters().getFirst("q");
-			User user = userRepo.findByUserNumber(userNumber);
-			if (user == null)
-			{
-				throw new WebApplicationException(Status.NOT_FOUND);
-			}
-			return Response.ok(user).build();
-		}
-
-		default:
-			throw new WebApplicationException(Status.BAD_REQUEST);
-		}//switch
 	}
 
 	@PUT
