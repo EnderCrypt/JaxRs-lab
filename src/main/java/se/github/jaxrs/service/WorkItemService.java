@@ -85,24 +85,50 @@ public class WorkItemService
 
 	}
 
+	private long getQueryID()
+	{
+		long id = -1L;
+		try
+		{
+			id = Long.parseLong(uriInfo.getQueryParameters().getFirst("id"));
+		}
+		catch (NumberFormatException e)
+		{
+			throw new WebApplicationException("ID must be a number");
+		}
+		return id;
+	}
+
 	//getBy
 	private Response getByQuery()
 	{
-		if (uriInfo.getQueryParameters().getFirst("getBy").equals("team"))
+		String getQuery = uriInfo.getQueryParameters().getFirst("getBy").toLowerCase();
+		Collection<WorkItem> result = null;
+		switch (getQuery)
 		{
-			Long id = Long.parseLong(uriInfo.getQueryParameters().getFirst("id"));
-			Collection<User> result = userRepo.findByTeamId(id);
-			if (result.isEmpty())
-			{
-				throw new WebApplicationException(Status.NOT_FOUND);
-			}
-			GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
-			{
-			};
-
-			return Response.ok(entity).build();
+		case "issue":
+			// TODO: no idea
+			break;
+		case "team":
+			// TODO: MISSING access to user repo
+			break;
+		case "status":
+			result = workItemRepo.findByItemStatus((int) getQueryID());
+			break;
+		case "user":
+			// TODO: i dont freaking have userRepo, cant get a user to check with
+			break;
+		default:
+			throw new WebApplicationException("Unknown getBy query");
 		}
-		throw new WebApplicationException(Status.BAD_REQUEST);
+		if (result.isEmpty())
+		{
+			throw new WebApplicationException(Status.NOT_FOUND);
+		}
+		GenericEntity<Collection<WorkItem>> entity = new GenericEntity<Collection<WorkItem>>(result)
+		{
+		};
+		return Response.ok(entity).build();
 	}
 
 	//searchBy
