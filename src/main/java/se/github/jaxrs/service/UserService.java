@@ -32,6 +32,11 @@ import se.github.springlab.model.User;
 import se.github.springlab.repository.UserRepository;
 import se.github.springlab.service.TaskerService;
 
+/**
+ * TODO: cleanup userservice query methods
+ * 
+ *
+ */
 @Path("/users")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -145,6 +150,7 @@ public class UserService extends AbstractService
 		}
 
 		case "userNumber":
+
 		{
 			String userNumber = uriInfo.getQueryParameters().getFirst("q");
 			User user = userRepo.findByUserNumber(userNumber);
@@ -157,6 +163,7 @@ public class UserService extends AbstractService
 
 		default:
 			throw new WebApplicationException(Status.BAD_REQUEST);
+
 		}//switch
 	}
 

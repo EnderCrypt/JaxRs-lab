@@ -35,7 +35,6 @@ import se.github.springlab.service.TaskerService;
 
 /**
  * DONE: 29/03-2016 Note: - entity Team.class is annotated with @XMLRootElement
- * - several TODOs for appealing purposes
  *
  */
 

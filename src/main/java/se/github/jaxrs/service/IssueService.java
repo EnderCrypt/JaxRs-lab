@@ -33,6 +33,14 @@ import se.github.springlab.model.Issue;
 import se.github.springlab.repository.IssueRepository;
 import se.github.springlab.service.TaskerService;
 
+/**
+ * IssueService. Handles issues for specific WorkItem object. Can create,
+ * retrieve and remove issues with logic through the TaskerService class
+ * 
+ * TODO: * finish remove function (check TaskerService.remove(Team team)) *
+ * possibly create an IssueProvider for proper json output/input
+ *
+ */
 @Path("/issues")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)

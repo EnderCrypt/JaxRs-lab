@@ -6,6 +6,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.activation.UnsupportedDataTypeException;
 import javax.ws.rs.Consumes;
@@ -29,10 +30,10 @@ import com.google.gson.JsonParser;
 
 import se.github.jaxrs.jsonupdater.JsonFieldUpdater;
 import se.github.logger.MultiLogger;
-import se.github.springlab.model.User;
 import se.github.springlab.model.WorkItem;
 import se.github.springlab.repository.WorkItemRepository;
 import se.github.springlab.service.TaskerService;
+import se.github.springlab.status.ItemStatus;
 
 @Path("/items")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -73,30 +74,30 @@ public class WorkItemService
 
 			return Response.ok(entity).build();
 		}
-		if (uriInfo.getQueryParameters().containsKey("getBy"))
+		for (Entry<String, List<String>> entry : uriInfo.getQueryParameters().entrySet())
 		{
-			return getByQuery();
-		}
-		if (uriInfo.getQueryParameters().containsKey("searchBy"))
-		{
-			return searchByQuery();
+			String key = entry.getKey().toLowerCase();
+			switch (key)
+			{
+			case "getBy":
+				return getByQuery();
+			case "searchBy":
+				return searchByQuery();
+			}
 		}
 		throw new WebApplicationException(Status.BAD_REQUEST);
-
 	}
 
 	private long getQueryID()
 	{
-		long id = -1L;
 		try
 		{
-			id = Long.parseLong(uriInfo.getQueryParameters().getFirst("id"));
+			return Long.parseLong(uriInfo.getQueryParameters().getFirst("id"));
 		}
 		catch (NumberFormatException e)
 		{
 			throw new WebApplicationException("ID must be a number");
 		}
-		return id;
 	}
 
 	//getBy
@@ -107,19 +108,25 @@ public class WorkItemService
 		switch (getQuery)
 		{
 		case "issue":
-			// TODO: no idea
+			result = service.getItemsWithIssue();
 			break;
 		case "team":
-			// TODO: MISSING access to user repo
+			result = workItemRepo.findByAssignedUser_Team(getQueryID());
 			break;
 		case "status":
-			result = workItemRepo.findByItemStatus((int) getQueryID());
+			int status = (int) getQueryID();
+			int validStatus = ItemStatus.values().length;
+			if (status < 0 || status > validStatus)
+			{
+				throw new WebApplicationException("Invalid status. Valid range: 0+" + validStatus, Status.BAD_REQUEST);
+			}
+			result = workItemRepo.findByItemStatus(status);
 			break;
 		case "user":
-			// TODO: i dont freaking have userRepo, cant get a user to check with
+			result = workItemRepo.findByAssignedUser(getQueryID());
 			break;
 		default:
-			throw new WebApplicationException("Unknown getBy query");
+			throw new WebApplicationException("Unknown getBy query", Status.BAD_REQUEST);
 		}
 		if (result.isEmpty())
 		{
