@@ -11,14 +11,17 @@ import se.github.springlab.model.User;
 
 public interface UserRepository extends PagingAndSortingRepository<User, Long>
 {
-	List<User> findByUsernameLike(String username);
+	@Query("SELECT u FROM User u WHERE u.username LIKE %:username%")
+	List<User> findByUsername(@Param("username") String username);
 
-	List<User> findByFirstNameLike(String firstName);
+	@Query("SELECT u FROM User u WHERE u.firstName LIKE %:firstName%")
+	List<User> findByFirstName(@Param("firstName") String firstName);
 
-	List<User> findByLastNameLike(String lastName);
+	@Query("SELECT u FROM User u WHERE u.lastName LIKE %:lastName%")
+	List<User> findByLastName(@Param("lastName") String lastName);
 
-	@Query("SELECT u FROM #{#entityName} u WHERE u.userNumber = ?1")
-	User findByUserNumber(String userNumber);
+	@Query("SELECT u FROM #{#entityName} u WHERE u.userNumber = :userNumber")
+	User findByUserNumber(@Param("userNumber") String userNumber);
 
 	List<User> findByTeam(Team team);
 

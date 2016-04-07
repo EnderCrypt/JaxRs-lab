@@ -6,6 +6,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.activation.UnsupportedDataTypeException;
 import javax.ws.rs.Consumes;
@@ -44,6 +45,12 @@ public class UserService extends AbstractService
 {
 	private static TaskerService service = getBean(TaskerService.class);
 	private static UserRepository userRepo = service.getUserRepository();
+	private static String queryKey = "";
+
+	static
+	{
+		//		userRepo.save(new User("john", "eriksson", "johndoe", "123456", "1001"));
+	}
 
 	@Context
 	UriInfo uriInfo;
@@ -69,13 +76,17 @@ public class UserService extends AbstractService
 
 			return Response.ok(entity).build();
 		}
-		if (uriInfo.getQueryParameters().containsKey("getBy"))
+		for (Entry<String, List<String>> entry : uriInfo.getQueryParameters().entrySet())
 		{
-			return getByQuery();
-		}
-		if (uriInfo.getQueryParameters().containsKey("searchBy"))
-		{
-			return searchByQuery();
+			String key = entry.getKey().toLowerCase();
+			queryKey = key;
+			switch (key)
+			{
+			case "getby":
+				return getByQuery();
+			case "searchby":
+				return searchByQuery();
+			}
 		}
 		throw new WebApplicationException(Status.BAD_REQUEST);
 
@@ -84,87 +95,62 @@ public class UserService extends AbstractService
 	//getBy
 	private Response getByQuery()
 	{
-		if (uriInfo.getQueryParameters().getFirst("getBy").equals("team"))
+		Long id = Long.parseLong(uriInfo.getQueryParameters().getFirst("q"));
+		Collection<User> result = userRepo.findByTeamId(id);
+		if (result.isEmpty())
 		{
-			Long id = Long.parseLong(uriInfo.getQueryParameters().getFirst("id"));
-			Collection<User> result = userRepo.findByTeamId(id);
-			if (result.isEmpty())
-			{
-				throw new WebApplicationException(Status.NOT_FOUND);
-			}
-			GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
-			{
-			};
-
-			return Response.ok(entity).build();
+			throw new WebApplicationException(Status.NOT_FOUND);
 		}
-		throw new WebApplicationException(Status.BAD_REQUEST);
+		GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
+		{
+		};
+
+		return Response.ok(entity).build();
 	}
 
 	//searchBy
 	private Response searchByQuery()
 	{
-		switch (uriInfo.getQueryParameters().getFirst("searchBy"))
-		{
-		case "firstName":
-		{
-			String firstName = uriInfo.getQueryParameters().getFirst("q");
-			List<User> firstNames = userRepo.findByFirstNameLike(firstName);
-			if (firstNames.isEmpty())
-			{
-				throw new WebApplicationException(Status.NOT_FOUND);
-			}
-			GenericEntity<List<User>> firstNamesEntity = new GenericEntity<List<User>>(firstNames)
-			{
-			};
+		String searchQuery = uriInfo.getQueryParameters().getFirst(queryKey);
+		String searchId = uriInfo.getQueryParameters().getFirst("q");
+		Collection<User> result = null;
 
-			return Response.ok(firstNamesEntity).build();
+		switch (searchQuery)
+		{
+		case "firstname":
+		{
+			result = userRepo.findByFirstName(searchId);
+			break;
 		}
-		case "lastName":
+		case "lastname":
 		{
-			String lastName = uriInfo.getQueryParameters().getFirst("q");
-			List<User> lastNames = userRepo.findByLastNameLike(lastName);
-			if (lastNames.isEmpty())
-			{
-				throw new WebApplicationException(Status.NOT_FOUND);
-			}
-			GenericEntity<List<User>> lastNamesEntity = new GenericEntity<List<User>>(lastNames)
-			{
-			};
-
-			return Response.ok(lastNamesEntity).build();
+			result = userRepo.findByLastName(searchId);
+			break;
 		}
 		case "username":
 		{
-			String username = uriInfo.getQueryParameters().getFirst("q");
-			List<User> usernames = userRepo.findByUsernameLike(username);
-			if (usernames.isEmpty())
-			{
-				throw new WebApplicationException(Status.NOT_FOUND);
-			}
-			GenericEntity<List<User>> usernamesEntity = new GenericEntity<List<User>>(usernames)
-			{
-			};
-
-			return Response.ok(usernamesEntity).build();
+			result = userRepo.findByUsername(searchId);
+			break;
 		}
-
-		case "userNumber":
-
+		case "usernumber":
 		{
-			String userNumber = uriInfo.getQueryParameters().getFirst("q");
-			User user = userRepo.findByUserNumber(userNumber);
-			if (user == null)
-			{
-				throw new WebApplicationException(Status.NOT_FOUND);
-			}
-			return Response.ok(user).build();
+			User user = userRepo.findByUserNumber(searchId);
+			result = new HashSet<>();
+			result.add(user);
+			break;
 		}
 
 		default:
-			throw new WebApplicationException(Status.BAD_REQUEST);
-
-		}//switch
+			throw new WebApplicationException("Unknown searchBy query", Status.BAD_REQUEST);
+		}
+		if (result.isEmpty())
+		{
+			throw new WebApplicationException(Status.NOT_FOUND);
+		}
+		GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
+		{
+		};
+		return Response.ok(entity).build();
 	}
 
 	@GET

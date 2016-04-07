@@ -3,6 +3,8 @@ package se.github.springlab.model;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToOne;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -11,16 +13,20 @@ import se.github.jaxrs.jsonupdater.JsonUpdatable;
 import se.github.springlab.status.IssueStatus;
 
 @Entity
+@XmlRootElement
 public class Issue extends Id
 {
+	@XmlElement
 	@JsonUpdatable
 	@Column(nullable = false)
 	private String description;
 
+	@XmlElement
 	@JsonUpdatable
 	@Column(name = "status", nullable = false)
 	private int issueStatus;
 
+	@XmlElement
 	@JsonUpdatable
 	@OneToOne //(cascade = { CascadeType.PERSIST, CascadeType.REFRESH })
 	private WorkItem workItem;
@@ -40,9 +46,9 @@ public class Issue extends Id
 		return description;
 	}
 
-	public IssueStatus getStatus()
+	public int getStatus()
 	{
-		return IssueStatus.values()[issueStatus];
+		return issueStatus;
 	}
 
 	public void setStatus(IssueStatus issueStatus)

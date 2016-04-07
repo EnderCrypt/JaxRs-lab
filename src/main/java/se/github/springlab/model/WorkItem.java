@@ -3,6 +3,8 @@ package se.github.springlab.model;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -11,19 +13,25 @@ import se.github.jaxrs.jsonupdater.JsonUpdatable;
 import se.github.springlab.status.ItemStatus;
 
 @Entity
+@XmlRootElement
 public class WorkItem extends Id
 {
+	@XmlElement
 	@JsonUpdatable
 	@Column(nullable = false)
 	private String topic;
 
+	@XmlElement
 	@JsonUpdatable
 	@Column(nullable = false)
 	private String description;
 
+	@XmlElement
+	@JsonUpdatable
 	@ManyToOne
 	private User assignedUser;
 
+	@XmlElement
 	@JsonUpdatable
 	@Column(name = "status", nullable = false)
 	private int itemStatus;
@@ -58,9 +66,9 @@ public class WorkItem extends Id
 		this.assignedUser = user;
 	}
 
-	public ItemStatus getStatus()
+	public int getStatus()
 	{
-		return ItemStatus.values()[itemStatus];
+		return itemStatus;
 	}
 
 	public void setStatus(ItemStatus ItemStatus)

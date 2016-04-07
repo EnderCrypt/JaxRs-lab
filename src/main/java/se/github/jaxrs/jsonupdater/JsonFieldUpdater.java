@@ -85,8 +85,16 @@ public class JsonFieldUpdater
 				}
 				else
 				{
-					objectField.update(object, jsonConverter.call(jsonEntryValue));
+					try
+					{
+						objectField.update(object, jsonConverter.call(jsonEntryValue));
+					}
+					catch (NumberFormatException e)
+					{
+						throw new UnsupportedDataTypeException("the json property " + jsonEntryName + " is expected to be of type " + objectFieldType.getName());
+					}
 				}
+
 			}
 		}
 	}

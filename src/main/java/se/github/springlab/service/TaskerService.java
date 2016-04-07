@@ -111,10 +111,17 @@ public class TaskerService
 		}
 		return workItemRepository.save(workItem);
 	}
-
-	public List<WorkItem> getByStatus(ItemStatus status)
+	
+	public boolean itemHasIssue(WorkItem workItem)
 	{
-		return workItemRepository.findByItemStatus(status.ordinal());
+		for(WorkItem item : getItemsWithIssue())
+		{
+			if(workItem.equals(item))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Transactional
@@ -131,7 +138,8 @@ public class TaskerService
 	// -------------------- ISSUE -------------------- //
 	public Issue update(Issue issue)
 	{
-		if (issue.getWorkItem().getStatus() == ItemStatus.DONE)
+		issue.setWorkItem(workItemRepository.findOne(issue.getWorkItem().getId()));
+		if (issue.getWorkItem().getStatus() == 2)
 		{
 			issue.getWorkItem().setStatus(ItemStatus.UNSTARTED);
 			return issueRepository.save(issue);

@@ -38,7 +38,6 @@ import se.github.springlab.status.ItemStatus;
 @Path("/items")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-
 public class WorkItemService
 {
 	@Context
@@ -46,6 +45,9 @@ public class WorkItemService
 
 	private static TaskerService service = getBean(TaskerService.class);
 	private static WorkItemRepository workItemRepo = service.getWorkItemRepository();
+	//the key looked for when deciding what type of query. searchby or getby
+	//respects casesensitivity
+	private static String queryKey = "";
 
 	static
 	{
@@ -77,11 +79,12 @@ public class WorkItemService
 		for (Entry<String, List<String>> entry : uriInfo.getQueryParameters().entrySet())
 		{
 			String key = entry.getKey().toLowerCase();
+			queryKey = key;
 			switch (key)
 			{
-			case "getBy":
+			case "getby":
 				return getByQuery();
-			case "searchBy":
+			case "searchby":
 				return searchByQuery();
 			}
 		}
@@ -92,7 +95,7 @@ public class WorkItemService
 	{
 		try
 		{
-			return Long.parseLong(uriInfo.getQueryParameters().getFirst("id"));
+			return Long.parseLong(uriInfo.getQueryParameters().getFirst("q"));
 		}
 		catch (NumberFormatException e)
 		{
@@ -103,7 +106,7 @@ public class WorkItemService
 	//getBy
 	private Response getByQuery()
 	{
-		String getQuery = uriInfo.getQueryParameters().getFirst("getBy").toLowerCase();
+		String getQuery = uriInfo.getQueryParameters().getFirst(queryKey);
 		Collection<WorkItem> result = null;
 		switch (getQuery)
 		{
@@ -111,7 +114,7 @@ public class WorkItemService
 			result = service.getItemsWithIssue();
 			break;
 		case "team":
-			result = workItemRepo.findByAssignedUser_Team(getQueryID());
+			result = workItemRepo.findByAssignedUser_Team_Id(getQueryID());
 			break;
 		case "status":
 			int status = (int) getQueryID();
@@ -123,7 +126,7 @@ public class WorkItemService
 			result = workItemRepo.findByItemStatus(status);
 			break;
 		case "user":
-			result = workItemRepo.findByAssignedUser(getQueryID());
+			result = workItemRepo.findByAssignedUser_Id(getQueryID());
 			break;
 		default:
 			throw new WebApplicationException("Unknown getBy query", Status.BAD_REQUEST);
@@ -135,27 +138,23 @@ public class WorkItemService
 		GenericEntity<Collection<WorkItem>> entity = new GenericEntity<Collection<WorkItem>>(result)
 		{
 		};
+
 		return Response.ok(entity).build();
 	}
 
 	// searchBy
 	private Response searchByQuery()
 	{
-		if (uriInfo.getQueryParameters().getFirst("searchBy").equals("description"))
+		String workItem = uriInfo.getQueryParameters().getFirst("q");
+		List<WorkItem> workItems = workItemRepo.findByDescription(workItem);
+		if (workItems.isEmpty())
 		{
-			String workItem = uriInfo.getQueryParameters().getFirst("q");
-			List<WorkItem> workItems = workItemRepo.findByDescriptionLike(workItem);
-			if (workItems.isEmpty())
-			{
-				throw new WebApplicationException(Status.NOT_FOUND);
-			}
-			GenericEntity<List<WorkItem>> workItemEntity = new GenericEntity<List<WorkItem>>(workItems)
-			{
-			};
-			return Response.ok(workItemEntity).build();
+			throw new WebApplicationException(Status.NOT_FOUND);
 		}
-		throw new WebApplicationException(Status.NOT_FOUND);
-
+		GenericEntity<List<WorkItem>> workItemEntity = new GenericEntity<List<WorkItem>>(workItems)
+		{
+		};
+		return Response.ok(workItemEntity).build();
 	}
 
 	@PUT
@@ -164,21 +163,16 @@ public class WorkItemService
 	{
 		JsonObject jsonObject = (JsonObject) new JsonParser().parse(json);
 		WorkItem workItem = workItemRepo.findOne(id);
-		JsonFieldUpdater.modifyWithJson(workItem, jsonObject);
+		try
+		{
+			JsonFieldUpdater.modifyWithJson(workItem, jsonObject);
+		}
+		catch (UnsupportedDataTypeException e)
+		{
+			throw new WebApplicationException(e.getMessage(), Status.BAD_REQUEST);
+		}
 
 		return service.update(workItem);
-	}
-
-	@GET
-	public Response getAll()
-	{
-		Collection<WorkItem> result = new HashSet<>();
-		workItemRepo.findAll().forEach(e -> result.add(e));
-		GenericEntity<Collection<WorkItem>> entity = new GenericEntity<Collection<WorkItem>>(result)
-		{
-		};
-
-		return Response.ok(entity).build();
 	}
 
 	@GET
@@ -198,7 +192,7 @@ public class WorkItemService
 	{
 		if (workItemRepo.exists(id))
 		{
-			workItemRepo.delete(id);
+			service.removeItem(workItemRepo.findOne(id));
 			return Response.ok().build();
 		}
 		return Response.status(Status.NOT_FOUND).build();
