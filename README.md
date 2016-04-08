@@ -9,7 +9,6 @@ The /libs folder contains libraries that we suggest you add to your project
 - @Tsiones
 - @MelEnt
 - @TimmieS1
-- Kevin Green (todo: add Github username)
 
 ##### Structure:
 ![alt tag](https://github.com/EnderCrypt/JaxRs-lab/raw/master/doc/mindmapTODO.png)
