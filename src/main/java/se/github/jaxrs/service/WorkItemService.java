@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 
 import javax.activation.UnsupportedDataTypeException;
 import javax.ws.rs.Consumes;
@@ -59,7 +60,7 @@ public class WorkItemService
 	{
 		WorkItem newItem = service.update(item);
 		URI location = uriInfo.getAbsolutePathBuilder().path(getClass(), "getOne").build(item.getId());
-
+		MultiLogger.log("WorkItemServiceLog", Level.INFO, "Created workitem: " + item.toString());
 		return Response.ok(newItem).contentLocation(location).build();
 	}
 
@@ -99,14 +100,14 @@ public class WorkItemService
 		}
 		catch (NumberFormatException e)
 		{
-			throw new WebApplicationException("ID must be a number");
+			throw new WebApplicationException("Query must be a number");
 		}
 	}
 
 	//getBy
 	private Response getByQuery()
 	{
-		String getQuery = uriInfo.getQueryParameters().getFirst(queryKey);
+		String getQuery = uriInfo.getQueryParameters().getFirst(queryKey).toLowerCase();
 		Collection<WorkItem> result = null;
 		switch (getQuery)
 		{
@@ -145,16 +146,21 @@ public class WorkItemService
 	// searchBy
 	private Response searchByQuery()
 	{
-		String workItem = uriInfo.getQueryParameters().getFirst("q");
-		List<WorkItem> workItems = workItemRepo.findByDescription(workItem);
-		if (workItems.isEmpty())
+		String searchToken = uriInfo.getQueryParameters().getFirst(queryKey).toLowerCase();
+		String searchId = uriInfo.getQueryParameters().getFirst("q");
+		if (searchToken.equals("description") || searchToken.equals("desc"))
 		{
-			throw new WebApplicationException(Status.NOT_FOUND);
+			List<WorkItem> workItems = workItemRepo.findByDescription(searchId);
+			if (workItems.isEmpty())
+			{
+				throw new WebApplicationException(Status.NOT_FOUND);
+			}
+			GenericEntity<List<WorkItem>> workItemEntity = new GenericEntity<List<WorkItem>>(workItems)
+			{
+			};
+			return Response.ok(workItemEntity).build();
 		}
-		GenericEntity<List<WorkItem>> workItemEntity = new GenericEntity<List<WorkItem>>(workItems)
-		{
-		};
-		return Response.ok(workItemEntity).build();
+		throw new WebApplicationException("Invalid search token! Valid tokens: description, desc", Status.BAD_REQUEST);
 	}
 
 	@PUT

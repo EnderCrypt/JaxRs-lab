@@ -61,7 +61,7 @@ public class IssueService
 	{
 		Issue newIssue = service.update(issue);
 		URI location = uriInfo.getAbsolutePathBuilder().path(getClass(), "getOne").build(issue.getId());
-		MultiLogger.log("IssueServiceLog", Level.INFO, "Created team: " + issue.toString());
+		MultiLogger.log("IssueServiceLog", Level.INFO, "Created issue: " + issue.toString());
 
 		return Response.ok(newIssue).contentLocation(location).build();
 	}

@@ -109,14 +109,21 @@ public class TaskerService
 				throw new InvalidUserException("cannot store more than 5 workitems at any time");
 			}
 		}
+		if (itemHasIssue(workItem))
+		{
+			if (workItem.getStatus() <= 1)
+			{
+				throw new InvalidItemException("cannot change status of workitem that has an issue to started or unfinished state!");
+			}
+		}
 		return workItemRepository.save(workItem);
 	}
-	
-	public boolean itemHasIssue(WorkItem workItem)
+
+	private boolean itemHasIssue(WorkItem workItem)
 	{
-		for(WorkItem item : getItemsWithIssue())
+		for (WorkItem item : getItemsWithIssue())
 		{
-			if(workItem.equals(item))
+			if (workItem.equals(item))
 			{
 				return true;
 			}
@@ -138,7 +145,10 @@ public class TaskerService
 	// -------------------- ISSUE -------------------- //
 	public Issue update(Issue issue)
 	{
-		issue.setWorkItem(workItemRepository.findOne(issue.getWorkItem().getId()));
+		//when creating issue via postman (client), only id of workitem is input to specify which assigned item.
+		//this ensures the workitem gets the correct values for its issue by looking up the item in the repository
+		WorkItem assignedItem = workItemRepository.findOne(issue.getWorkItem().getId());
+		issue.setWorkItem(assignedItem);
 		if (issue.getWorkItem().getStatus() == 2)
 		{
 			issue.getWorkItem().setStatus(ItemStatus.UNSTARTED);

@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 
 import javax.activation.UnsupportedDataTypeException;
 import javax.ws.rs.Consumes;
@@ -29,6 +30,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import se.github.jaxrs.jsonupdater.JsonFieldUpdater;
+import se.github.logger.MultiLogger;
 import se.github.springlab.model.User;
 import se.github.springlab.repository.UserRepository;
 import se.github.springlab.service.TaskerService;
@@ -49,7 +51,7 @@ public class UserService extends AbstractService
 
 	static
 	{
-		//		userRepo.save(new User("john", "eriksson", "johndoe", "123456", "1001"));
+		MultiLogger.createLogger("UserServiceLog");
 	}
 
 	@Context
@@ -60,6 +62,7 @@ public class UserService extends AbstractService
 	{
 		User newUser = service.update(user);
 		URI location = uriInfo.getAbsolutePathBuilder().path(getClass(), "getOne").build(user.getId());
+		MultiLogger.log("UserServiceLog", Level.INFO, "Created user: " + user.toString());
 		return Response.ok(newUser).contentLocation(location).build();
 	}
 
@@ -92,10 +95,22 @@ public class UserService extends AbstractService
 
 	}
 
+	private long getQueryID()
+	{
+		try
+		{
+			return Long.parseLong(uriInfo.getQueryParameters().getFirst("q"));
+		}
+		catch (NumberFormatException e)
+		{
+			throw new WebApplicationException("Correct query uri: users/?<getby/searchby>=<entity>&q=<id>", Status.BAD_REQUEST);
+		}
+	}
+
 	//getBy
 	private Response getByQuery()
 	{
-		Long id = Long.parseLong(uriInfo.getQueryParameters().getFirst("q"));
+		Long id = getQueryID();
 		Collection<User> result = userRepo.findByTeamId(id);
 		if (result.isEmpty())
 		{
@@ -111,11 +126,11 @@ public class UserService extends AbstractService
 	//searchBy
 	private Response searchByQuery()
 	{
-		String searchQuery = uriInfo.getQueryParameters().getFirst(queryKey);
+		String searchToken = uriInfo.getQueryParameters().getFirst(queryKey).toLowerCase();
 		String searchId = uriInfo.getQueryParameters().getFirst("q");
 		Collection<User> result = null;
 
-		switch (searchQuery)
+		switch (searchToken)
 		{
 		case "firstname":
 		{
@@ -141,7 +156,7 @@ public class UserService extends AbstractService
 		}
 
 		default:
-			throw new WebApplicationException("Unknown searchBy query", Status.BAD_REQUEST);
+			throw new WebApplicationException("Unknown search token! Valid tokens: firstname, lastname, username and usernumber", Status.BAD_REQUEST);
 		}
 		if (result.isEmpty())
 		{
