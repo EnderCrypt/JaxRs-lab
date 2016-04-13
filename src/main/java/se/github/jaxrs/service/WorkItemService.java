@@ -46,9 +46,6 @@ public class WorkItemService
 
 	private static TaskerService service = getBean(TaskerService.class);
 	private static WorkItemRepository workItemRepo = service.getWorkItemRepository();
-	//the key looked for when deciding what type of query. searchby or getby
-	//respects casesensitivity
-	private static String queryKey = "";
 
 	static
 	{
@@ -79,14 +76,14 @@ public class WorkItemService
 		}
 		for (Entry<String, List<String>> entry : uriInfo.getQueryParameters().entrySet())
 		{
-			String key = entry.getKey().toLowerCase();
-			queryKey = key;
-			switch (key)
+			String key = entry.getKey();
+			String searchToken = uriInfo.getQueryParameters().getFirst(key);
+			switch (key.toLowerCase())
 			{
 			case "getby":
-				return getByQuery();
+				return getByQuery(searchToken);
 			case "searchby":
-				return searchByQuery();
+				return searchByQuery(searchToken);
 			}
 		}
 		throw new WebApplicationException(Status.BAD_REQUEST);
@@ -105,11 +102,10 @@ public class WorkItemService
 	}
 
 	//getBy
-	private Response getByQuery()
+	private Response getByQuery(String searchToken)
 	{
-		String getQuery = uriInfo.getQueryParameters().getFirst(queryKey).toLowerCase();
 		Collection<WorkItem> result = null;
-		switch (getQuery)
+		switch (searchToken.toLowerCase())
 		{
 		case "issue":
 			result = service.getItemsWithIssue();
@@ -144,11 +140,10 @@ public class WorkItemService
 	}
 
 	// searchBy
-	private Response searchByQuery()
+	private Response searchByQuery(String key)
 	{
-		String searchToken = uriInfo.getQueryParameters().getFirst(queryKey).toLowerCase();
-		String searchId = uriInfo.getQueryParameters().getFirst("q");
-		if (searchToken.equals("description") || searchToken.equals("desc"))
+		String searchId = String.valueOf(getQueryID());
+		if (key.equalsIgnoreCase("description") || key.equalsIgnoreCase("desc"))
 		{
 			List<WorkItem> workItems = workItemRepo.findByDescription(searchId);
 			if (workItems.isEmpty())

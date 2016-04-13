@@ -47,7 +47,6 @@ public class UserService extends AbstractService
 {
 	private static TaskerService service = getBean(TaskerService.class);
 	private static UserRepository userRepo = service.getUserRepository();
-	private static String queryKey = "";
 
 	static
 	{
@@ -81,14 +80,14 @@ public class UserService extends AbstractService
 		}
 		for (Entry<String, List<String>> entry : uriInfo.getQueryParameters().entrySet())
 		{
-			String key = entry.getKey().toLowerCase();
-			queryKey = key;
-			switch (key)
+			String key = entry.getKey();
+			String searchToken = uriInfo.getQueryParameters().getFirst(key);
+			switch (key.toLowerCase())
 			{
 			case "getby":
-				return getByQuery();
+				return getByQuery(searchToken);
 			case "searchby":
-				return searchByQuery();
+				return searchByQuery(searchToken);
 			}
 		}
 		throw new WebApplicationException(Status.BAD_REQUEST);
@@ -108,29 +107,31 @@ public class UserService extends AbstractService
 	}
 
 	//getBy
-	private Response getByQuery()
+	private Response getByQuery(String searchToken)
 	{
-		Long id = getQueryID();
-		Collection<User> result = userRepo.findByTeamId(id);
-		if (result.isEmpty())
+		if (searchToken.equals("team"))
 		{
-			throw new WebApplicationException(Status.NOT_FOUND);
-		}
-		GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
-		{
-		};
+			Collection<User> result = userRepo.findByTeamId(getQueryID());
+			if (result.isEmpty())
+			{
+				throw new WebApplicationException(Status.NOT_FOUND);
+			}
+			GenericEntity<Collection<User>> entity = new GenericEntity<Collection<User>>(result)
+			{
+			};
 
-		return Response.ok(entity).build();
+			return Response.ok(entity).build();
+		}
+		throw new WebApplicationException(Status.BAD_REQUEST);
 	}
 
 	//searchBy
-	private Response searchByQuery()
+	private Response searchByQuery(String searchToken)
 	{
-		String searchToken = uriInfo.getQueryParameters().getFirst(queryKey).toLowerCase();
-		String searchId = uriInfo.getQueryParameters().getFirst("q");
+		String searchId = String.valueOf(getQueryID());
 		Collection<User> result = null;
 
-		switch (searchToken)
+		switch (searchToken.toLowerCase())
 		{
 		case "firstname":
 		{

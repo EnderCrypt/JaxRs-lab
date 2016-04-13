@@ -44,7 +44,7 @@ public class TaskerService
 	{
 		if (team.isActive() == false)
 		{
-			for (User user : userRepository.findByTeam(team))
+			for (User user : userRepository.findByTeamId(team.getId()))
 			{
 				user.assignTeam(null);
 				update(user);
@@ -56,7 +56,7 @@ public class TaskerService
 	@Transactional
 	public void remove(Team team)
 	{
-		for (User user : userRepository.findByTeam(team))
+		for (User user : userRepository.findByTeamId(team.getId()))
 		{
 			user.assignTeam(null);
 		}
@@ -73,7 +73,7 @@ public class TaskerService
 		}
 		if (user.isActive() == false)
 		{
-			List<WorkItem> workItems = workItemRepository.findByAssignedUser(user);
+			List<WorkItem> workItems = workItemRepository.findByAssignedUser_Id(user.getId());
 			for (WorkItem workItem : workItems)
 			{
 				workItem.setStatus(ItemStatus.UNSTARTED);
@@ -82,7 +82,7 @@ public class TaskerService
 		}
 		if (!user.hasId())
 		{
-			if (userRepository.findByTeam(user.getTeam()).size() > 9)
+			if (userRepository.findByTeamId(user.getTeam().getId()).size() > 9)
 			{
 				throw new InvalidTeamException("team does not allow more than 10 users at any time");
 			}
@@ -104,7 +104,7 @@ public class TaskerService
 		}
 		if (!workItem.hasId())
 		{
-			if (workItemRepository.findByAssignedUser(workItem.getAssignedUser()).size() > 4)
+			if (workItemRepository.findByAssignedUser_Id(workItem.getAssignedUser().getId()).size() > 4)
 			{
 				throw new InvalidUserException("cannot store more than 5 workitems at any time");
 			}
@@ -145,10 +145,6 @@ public class TaskerService
 	// -------------------- ISSUE -------------------- //
 	public Issue update(Issue issue)
 	{
-		//when creating issue via postman (client), only id of workitem is input to specify which assigned item.
-		//this ensures the workitem gets the correct values for its issue by looking up the item in the repository
-		WorkItem assignedItem = workItemRepository.findOne(issue.getWorkItem().getId());
-		issue.setWorkItem(assignedItem);
 		if (issue.getWorkItem().getStatus() == 2)
 		{
 			issue.getWorkItem().setStatus(ItemStatus.UNSTARTED);

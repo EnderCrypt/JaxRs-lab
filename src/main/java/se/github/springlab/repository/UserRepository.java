@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
-import se.github.springlab.model.Team;
 import se.github.springlab.model.User;
 
 public interface UserRepository extends PagingAndSortingRepository<User, Long>
@@ -23,8 +22,6 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>
 	@Query("SELECT u FROM #{#entityName} u WHERE u.userNumber = :userNumber")
 	User findByUserNumber(@Param("userNumber") String userNumber);
 
-	List<User> findByTeam(Team team);
-
-	@Query(value = "SELECT * FROM User u WHERE u.team_id = :id", nativeQuery = true)
+	@Query("SELECT u FROM User u WHERE u.team_id = :id")
 	List<User> findByTeamId(@Param("id") Long id);
 }
